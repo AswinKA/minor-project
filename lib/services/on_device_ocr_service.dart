@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:google_mlkit_language_id/google_mlkit_language_id.dart';
+import 'package:google_mlkit_commons/google_mlkit_commons.dart';
 import '../models/ocr_result.dart';
 
 class OnDeviceOCRService {
@@ -9,7 +10,15 @@ class OnDeviceOCRService {
 
   /// Perform OCR on image bytes and return extracted text
   Future<String> extractText(Uint8List imageBytes) async {
-    final inputImage = InputImage.fromBytes(bytes: imageBytes);
+    final inputImage = InputImage.fromBytes(
+      bytes: imageBytes,
+      metadata: InputImageMetadata(
+        size: const Size(0, 0),
+        rotation: InputImageRotation.rotation0deg,
+        format: InputImageFormat.bgra8888,
+        bytesPerRow: 0,
+      ),
+    );
     final recognizedText = await _textRecognizer.processImage(inputImage);
     
     StringBuffer fullText = StringBuffer();
