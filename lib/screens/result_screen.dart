@@ -4,7 +4,7 @@ import '../models/ocr_result.dart';
 import '../services/tts_service.dart';
 
 class ResultScreen extends StatefulWidget {
-  final Map<String, dynamic> result;
+  final OCRResult result;
 
   const ResultScreen({super.key, required this.result});
 
@@ -46,11 +46,11 @@ class _ResultScreenState extends State<ResultScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final originalText = widget.result['text'] ?? '';
-    final translatedText = widget.result['translation'] ?? '';
-    final detectedLang = widget.result['detected_language'] ?? 'Unknown';
-    final targetLang = widget.result['target_language'] ?? 'en';
-    final processingTime = widget.result['processing_time_seconds'];
+    final originalText = widget.result.text;
+    final translatedText = widget.result.translation;
+    final detectedLang = widget.result.detectedLanguage;
+    final targetLang = widget.result.targetLanguage;
+    final processingTime = widget.result.processingTime;
 
     return Scaffold(
       appBar: AppBar(

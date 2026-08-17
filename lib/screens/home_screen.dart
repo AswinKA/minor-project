@@ -7,6 +7,7 @@ import '../widgets/language_selector.dart';
 import 'camera_screen.dart';
 import 'result_screen.dart';
 import '../models/ocr_result.dart';
+import '../models/language.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -39,31 +40,22 @@ class _HomeScreenState extends State<HomeScreen> {
         );
 
         // Save to history
-        await StorageService.saveScan(OCRResult(
+        final ocrResult = OCRResult(
           id: DateTime.now().millisecondsSinceEpoch.toString(),
-          originalText: result['original_text'] ?? '',
-          translatedText: result['translated_text'] ?? '',
+          text: result['text'] ?? result['original_text'] ?? '',
           detectedLanguage: result['detected_language'] ?? 'unknown',
+          translation: result['translation'] ?? result['translated_text'] ?? '',
           targetLanguage: _targetLanguage ?? 'en',
           timestamp: DateTime.now(),
           imagePath: pickedFile.path,
-        ));
+        );
+        await StorageService.saveResult(ocrResult.toJson());
 
         if (mounted) {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => ResultScreen(
-                ocrResult: OCRResult(
-                  id: DateTime.now().millisecondsSinceEpoch.toString(),
-                  originalText: result['original_text'] ?? '',
-                  translatedText: result['translated_text'] ?? '',
-                  detectedLanguage: result['detected_language'] ?? 'unknown',
-                  targetLanguage: _targetLanguage ?? 'en',
-                  timestamp: DateTime.now(),
-                  imagePath: pickedFile.path,
-                ),
-              ),
+              builder: (context) => ResultScreen(result: ocrResult),
             ),
           );
         }
@@ -128,7 +120,7 @@ class _HomeScreenState extends State<HomeScreen> {
             onPressed: () {
               // Settings for server URL
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Server: ${ApiService.baseUrl}')),
+                SnackBar(content: Text('Server: ${ApiService.baseUrl}')),
               );
             },
           ),
@@ -176,9 +168,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   const SizedBox(height: 48),
                   LanguageSelector(
+                    selectedLangCode: _targetLanguage ?? 'en',
                     onLanguageSelected: (lang) {
                       setState(() => _targetLanguage = lang);
                     },
+                    languages: Language.defaultList,
                   ),
                   const SizedBox(height: 32),
                   ElevatedButton.icon(

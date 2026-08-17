@@ -33,7 +33,7 @@ class _CameraScreenState extends State<CameraScreen> {
     final langs = await ApiService.getLanguages();
     setState(() {
       _selectedTargetLang = defaultLang;
-      _languages = langs;
+      _languages = langs.cast<Language>();
     });
   }
 
@@ -136,9 +136,9 @@ class _CameraScreenState extends State<CameraScreen> {
                     ),
                     const SizedBox(height: 10),
                     LanguageSelector(
-                      selectedCode: _selectedTargetLang,
+                      selectedLangCode: _selectedTargetLang,
                       languages: _languages,
-                      onChanged: (val) {
+                      onLanguageSelected: (val) {
                         setState(() {
                           _selectedTargetLang = val;
                         });
