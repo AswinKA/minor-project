@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import '../services/api_service.dart';
 import '../services/storage_service.dart';
 import '../models/language.dart';
+import '../models/ocr_result.dart';
 import '../widgets/language_selector.dart';
 import 'result_screen.dart';
 
