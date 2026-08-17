@@ -73,7 +73,7 @@ class _CameraScreenState extends State<CameraScreen> {
       );
 
       final result = OCRResult.fromJson(resultData);
-      await StorageService.saveResult(result);
+      await StorageService.saveResult(result.toJson());
 
       if (!mounted) return;
       Navigator.push(
