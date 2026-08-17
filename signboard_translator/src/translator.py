@@ -9,7 +9,7 @@ This module handles:
 
 from typing import Optional, List, Dict
 from langdetect import detect, DetectorFactory, LangDetectException
-from googletrans import Translator
+from deep_translator import GoogleTranslator
 import re
 
 
@@ -81,7 +81,8 @@ class LanguageDetector:
     
     def __init__(self):
         """Initialize the language detector."""
-        self.translator = Translator()
+        # deep_translator doesn't require initialization
+        pass
     
     def detect(self, text: str) -> Optional[str]:
         """
@@ -190,7 +191,7 @@ class TextTranslator:
     
     def __init__(self):
         """Initialize the translator."""
-        self.translator = Translator()
+        self.translator = GoogleTranslator(source='auto', target='en')
         self.detector = LanguageDetector()
     
     def translate(self, text: str, dest_lang: str = 'en', 
@@ -221,20 +222,17 @@ class TextTranslator:
             if src_lang is None:
                 src_lang = self.detector.detect(text)
             
-            # Perform translation
-            translated = self.translator.translate(
-                text, 
-                src=src_lang,
-                dest=dest_lang
-            )
+            # Perform translation using deep_translator
+            translator_instance = GoogleTranslator(source=src_lang or 'auto', target=dest_lang)
+            translated_text = translator_instance.translate(text)
             
             return {
                 'original_text': text,
-                'translated_text': translated.text,
-                'source_language': translated.src if hasattr(translated, 'src') else src_lang,
+                'translated_text': translated_text,
+                'source_language': src_lang,
                 'destination_language': dest_lang,
-                'pronunciation': getattr(translated, 'pronunciation', None),
-                'extra_data': getattr(translated, 'extra_data', None),
+                'pronunciation': None,
+                'extra_data': None,
                 'success': True,
                 'error': None
             }
