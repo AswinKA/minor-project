@@ -33,22 +33,14 @@ class _HomeScreenState extends State<HomeScreen> {
       setState(() => _isLoading = true);
       try {
         final bytes = await pickedFile.readAsBytes();
-        final result = await ApiService.uploadImageBytes(
+        final resultData = await ApiService.uploadImageBytes(
           imageBytes: bytes,
           filename: pickedFile.name,
           targetLanguage: _targetLanguage ?? 'en',
         );
 
         // Save to history
-        final ocrResult = OCRResult(
-          id: DateTime.now().millisecondsSinceEpoch.toString(),
-          text: result['text'] ?? result['original_text'] ?? '',
-          detectedLanguage: result['detected_language'] ?? 'unknown',
-          translation: result['translation'] ?? result['translated_text'] ?? '',
-          targetLanguage: _targetLanguage ?? 'en',
-          timestamp: DateTime.now(),
-          imagePath: pickedFile.path,
-        );
+        final ocrResult = OCRResult.fromJson(resultData, imagePath: pickedFile.path);
         await StorageService.saveResult(ocrResult.toJson());
 
         if (mounted) {

@@ -65,12 +65,13 @@ class _CameraScreenState extends State<CameraScreen> {
     });
 
     try {
-      final result = await ApiService.uploadImageBytes(
+      final resultData = await ApiService.uploadImageBytes(
         imageBytes: _selectedBytes!,
         filename: _selectedFilename,
         targetLanguage: _selectedTargetLang,
       );
 
+      final result = OCRResult.fromJson(resultData);
       await StorageService.saveResult(result);
 
       if (!mounted) return;
