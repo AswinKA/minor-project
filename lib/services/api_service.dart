@@ -80,9 +80,9 @@ class ApiService {
       final data = json.decode(response.body);
       List<dynamic> languages = data['languages'];
       return languages.map((lang) => {
-        'code': lang['code'],
-        'name': lang['name'],
-      }).toList();
+        'code': lang['code'].toString(),
+        'name': lang['name'].toString(),
+      }).cast<Map<String, String>>().toList();
     } else {
       // Return default languages if API fails
       return [

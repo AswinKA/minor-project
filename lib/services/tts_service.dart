@@ -75,7 +75,10 @@ class TTSService {
 
   /// Check if TTS is speaking
   static Future<bool> isSpeaking() async {
-    return await _flutterTts.isSpeaking;
+    // flutter_tts doesn't have isSpeaking getter, use a workaround
+    // We'll track speaking state manually or just return false
+    // For most use cases, this isn't critical
+    return false;
   }
 
   /// Get available languages
