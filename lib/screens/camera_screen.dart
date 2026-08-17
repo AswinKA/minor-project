@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../services/api_service.dart';
 import '../services/storage_service.dart';
+import '../services/on_device_ocr_service.dart';
 import '../models/language.dart';
 import '../models/ocr_result.dart';
 import '../widgets/language_selector.dart';
@@ -17,11 +18,13 @@ class CameraScreen extends StatefulWidget {
 
 class _CameraScreenState extends State<CameraScreen> {
   final ImagePicker _picker = ImagePicker();
+  final OnDeviceOCRService _ocrService = OnDeviceOCRService();
   Uint8List? _selectedBytes;
   String _selectedFilename = 'image.jpg';
   bool _isLoading = false;
   String _selectedTargetLang = 'en';
   List<Language> _languages = Language.defaultList;
+  bool _useOnDevice = true; // Toggle between on-device and API
 
   @override
   void initState() {
@@ -29,13 +32,27 @@ class _CameraScreenState extends State<CameraScreen> {
     _loadSettings();
   }
 
+  @override
+  void dispose() {
+    _ocrService.dispose();
+    super.dispose();
+  }
+
   Future<void> _loadSettings() async {
     final defaultLang = await StorageService.getDefaultTargetLang();
-    final langs = await ApiService.getLanguages();
-    setState(() {
-      _selectedTargetLang = defaultLang;
-      _languages = langs.cast<Language>();
-    });
+    try {
+      final langs = await ApiService.getLanguages();
+      setState(() {
+        _selectedTargetLang = defaultLang;
+        _languages = langs.cast<Language>();
+      });
+    } catch (e) {
+      // Use default languages if API fails
+      setState(() {
+        _selectedTargetLang = defaultLang;
+        _languages = Language.defaultList;
+      });
+    }
   }
 
   Future<void> _pickImage(ImageSource source) async {
@@ -66,13 +83,29 @@ class _CameraScreenState extends State<CameraScreen> {
     });
 
     try {
-      final resultData = await ApiService.uploadImageBytes(
-        imageBytes: _selectedBytes!,
-        filename: _selectedFilename,
-        targetLanguage: _selectedTargetLang,
-      );
-
-      final result = OCRResult.fromJson(resultData);
+      OCRResult result;
+      
+      if (_useOnDevice) {
+        // Use on-device OCR (no backend required)
+        result = await _ocrService.processImage(
+          imageBytes: _selectedBytes!,
+          targetLanguage: _selectedTargetLang,
+        );
+        
+        // Show message that translation requires backend
+        if (result.translation == result.text) {
+          _showSnackBar('OCR completed! Translation requires backend setup.');
+        }
+      } else {
+        // Use backend API
+        final resultData = await ApiService.uploadImageBytes(
+          imageBytes: _selectedBytes!,
+          filename: _selectedFilename,
+          targetLanguage: _selectedTargetLang,
+        );
+        result = OCRResult.fromJson(resultData);
+      }
+      
       await StorageService.saveResult(result.toJson());
 
       if (!mounted) return;
@@ -109,8 +142,44 @@ class _CameraScreenState extends State<CameraScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: const Text('Signboard OCR Scanner'),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Signboard OCR Scanner'),
+            const SizedBox(width: 10),
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: _useOnDevice ? Colors.green : Colors.orange,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                _useOnDevice ? 'Offline' : 'Online',
+                style: TextStyle(color: Colors.white, fontSize: 12),
+              ),
+            ),
+          ],
+        ),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: Icon(_useOnDevice ? Icons.cloud_off : Icons.cloud),
+            tooltip: _useOnDevice ? 'Using On-Device OCR' : 'Using Backend API',
+            onPressed: () {
+              setState(() {
+                _useOnDevice = !_useOnDevice;
+              });
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(_useOnDevice 
+                    ? 'Switched to On-Device OCR (No backend needed)' 
+                    : 'Switched to Backend API mode'),
+                  duration: Duration(seconds: 2),
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body: SafeArea(
         child: Padding(
