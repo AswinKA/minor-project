@@ -27,7 +27,7 @@ class OnDeviceOCRService {
     if (text.isEmpty) return 'unknown';
     try {
       final identifiedLang = await _languageIdentifier.identifyLanguage(text);
-      return identifiedLang?.tag ?? 'unknown';
+      return identifiedLang ?? 'unknown';
     } catch (e) {
       return 'unknown';
     }
